@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template, request
 from utils.youtube_api import search_channels, get_channel_stats, get_recent_videos, QuotaExceededError, is_demo_mode
 from utils.analytics import aggregate_last_30_days, calculate_growth, infer_niche
 from utils.revenue import estimate_revenue, project_next_month, generate_monthly_history
+import os
 
 app = Flask(__name__)
 
@@ -149,5 +150,7 @@ def channel_details(channel_id):
         }), 500
 
 if __name__ == "__main__":
-    # Start the Flask development server on port 5000
-    app.run(debug=True, port=5000)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000))
+    )
