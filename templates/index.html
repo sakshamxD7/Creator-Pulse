@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CreatorPulse - Premium YouTube channel analytics and revenue projection dashboard. Analyze views, engagement, growth trends, and niche-based CPM estimations.">
+    <title>CreatorPulse — YouTube Channel Analytics</title>
+    
+    <!-- Google Fonts: Inter (400, 500, 600) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Topbar Header -->
+    <header class="topbar" id="app-topbar">
+        <div class="topbar-container">
+            <div class="brand" id="app-brand" onclick="resetDashboard()">
+                <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="30" height="30" style="vertical-align: middle; margin-right: 2px;">
+                    <rect x="10" y="25" width="180" height="150" rx="45" ry="45" fill="#ee1c25" />
+                    <polygon points="85,75 125,100 85,125" fill="#ffffff" />
+                    <path d="M40,150 Q110,130 160,70" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" />
+                    <circle cx="160" cy="70" r="10" fill="#ffffff" />
+                    <rect x="70" y="130" width="12" height="20" rx="3" ry="3" fill="#ffffff" />
+                    <rect x="95" y="115" width="12" height="35" rx="3" ry="3" fill="#ffffff" />
+                    <rect x="120" y="98" width="12" height="52" rx="3" ry="3" fill="#ffffff" />
+                    <rect x="145" y="82" width="12" height="68" rx="3" ry="3" fill="#ffffff" />
+                </svg>
+                <span class="brand-name"><span class="brand-creator">Creator</span><span class="brand-pulse">Pulse</span></span>
+            </div>
+            
+            <!-- Small search input in header (visible when dashboard is active) -->
+            <div class="topbar-search-wrapper" id="topbar-search-container" style="display: none;">
+                <form id="topbar-search-form" onsubmit="handleSearch(event, 'topbar-search-input')">
+                    <div class="search-input-group">
+                        <input type="text" id="topbar-search-input" placeholder="Search another channel..." required>
+                        <button type="submit" aria-label="Search">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+        
+        <!-- HERO / INITIAL SEARCH STATE -->
+        <section class="hero-section" id="hero-search-section">
+            <div class="hero-container">
+                <h1 class="hero-title">Elevate Your YouTube Strategy</h1>
+                <p class="hero-subtitle">Get deep insights, engagement breakdowns, and niche-specific revenue calculations in a single click.</p>
+                
+                <form id="hero-search-form" onsubmit="handleSearch(event, 'hero-search-input')">
+                    <div class="hero-search-box">
+                        <input type="text" id="hero-search-input" placeholder="Enter YouTube channel name (e.g. Marques Brownlee)..." required>
+                        <button type="submit" class="btn-primary">
+                            <span>Analyze Channel</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Search Result List Container -->
+                <div class="search-results-wrapper" id="search-results-container" style="display: none;">
+                    <h3 class="search-results-heading">Select a Channel to Load Analytics</h3>
+                    <div class="search-results-grid" id="search-results-grid">
+                        <!-- Clickable channel cards loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD CONTAINER (Hidden until channel details load) -->
+        <div class="dashboard-wrapper" id="dashboard-content" style="display: none;">
+            
+            <!-- Demo Warning Banner -->
+            <div class="demo-banner" id="demo-banner" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span><strong>Demo Mode:</strong> Using mock data. Configure your <code>YOUTUBE_API_KEY</code> in the <code>.env</code> file to analyze live data.</span>
+            </div>
+            
+            <!-- Channel Header / Profile Details Card -->
+            <section class="channel-profile-card">
+                <div class="profile-layout">
+                    <img id="channel-profile-img" src="" alt="Channel Avatar" class="profile-avatar">
+                    <div class="profile-details">
+                        <div class="profile-meta">
+                            <h2 id="channel-title" class="channel-name">Channel Name</h2>
+                            <span id="channel-country" class="badge-country">US</span>
+                        </div>
+                        <p id="channel-desc" class="channel-description">Channel description goes here...</p>
+                        <div class="profile-quick-stats">
+                            <div class="quick-stat-item">
+                                <span class="quick-stat-label">Subscribers</span>
+                                <span id="quick-stat-subscribers" class="quick-stat-value">0</span>
+                            </div>
+                            <div class="quick-stat-item">
+                                <span class="quick-stat-label">Total Views</span>
+                                <span id="quick-stat-views" class="quick-stat-value">0</span>
+                            </div>
+                            <div class="quick-stat-item">
+                                <span class="quick-stat-label">Videos Uploaded</span>
+                                <span id="quick-stat-videos" class="quick-stat-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STAT CARDS ROW (4 Grid Cards) -->
+            <section class="stat-cards-grid">
+                <!-- Card 1: Views -->
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-card-info">
+                            <span class="stat-card-label">VIEWS (LAST 30 DAYS)</span>
+                            <span id="card-views-count" class="stat-card-value">0</span>
+                        </div>
+                        <div class="stat-card-icon-wrapper">
+                            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <span id="card-views-badge" class="badge-success">0%</span>
+                        <span class="stat-footer-text">vs last month</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Likes -->
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-card-info">
+                            <span class="stat-card-label">LIKES (LAST 30 DAYS)</span>
+                            <span id="card-likes-count" class="stat-card-value">0</span>
+                        </div>
+                        <div class="stat-card-icon-wrapper">
+                            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <span id="card-likes-badge" class="badge-success">0%</span>
+                        <span class="stat-footer-text">vs last month</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Subscribers Growth -->
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-card-info">
+                            <span class="stat-card-label">EST. SUBSCRIBERS DELTA</span>
+                            <span id="card-subs-count" class="stat-card-value">0</span>
+                        </div>
+                        <div class="stat-card-icon-wrapper">
+                            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <span id="card-subs-badge" class="badge-success">0%</span>
+                        <span class="stat-footer-text">vs last month</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Estimated Revenue -->
+                <div class="stat-card">
+                    <div class="stat-card-body">
+                        <div class="stat-card-info">
+                            <span class="stat-card-label">EST. 30D REVENUE</span>
+                            <span id="card-revenue-range" class="stat-card-value">₹0 - ₹0</span>
+                        </div>
+                        <div class="stat-card-icon-wrapper">
+                            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <span id="card-revenue-badge" class="badge-success">0%</span>
+                        <span class="stat-footer-text">vs last month</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CHARTS SECTION (Line + Doughnut) -->
+            <section class="charts-section-grid">
+                <!-- Left: Line Chart (60%) -->
+                <div class="card chart-card line-chart-wrapper">
+                    <div class="card-header">
+                        <h3 class="card-title">Views — Last 30 Days</h3>
+                        <span class="card-subtitle">Daily distribution of views based on uploads</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="viewsLineChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right: Doughnut Chart (40%) -->
+                <div class="card chart-card doughnut-chart-wrapper">
+                    <div class="card-header">
+                        <h3 class="card-title">Engagement Breakdown</h3>
+                        <span class="card-subtitle">Ratio of total likes to comments</span>
+                    </div>
+                    <div class="chart-container doughnut-container">
+                        <canvas id="engagementDoughnutChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GROWTH COMPARISON SECTION (3 Metric Cards) -->
+            <section class="growth-cards-grid">
+                <!-- Card 1: Subscribers Delta -->
+                <div class="growth-card card">
+                    <div class="growth-card-body">
+                        <span class="growth-card-label">Subscribers Delta</span>
+                        <div class="growth-metric-val">
+                            <span id="growth-subs-pct" class="growth-pct-number text-success">+0.0%</span>
+                        </div>
+                        <div class="growth-card-comparison">Estimated growth rate vs last month</div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Views Delta -->
+                <div class="growth-card card">
+                    <div class="growth-card-body">
+                        <span class="growth-card-label">Views Delta</span>
+                        <div class="growth-metric-val">
+                            <span id="growth-views-pct" class="growth-pct-number text-success">+0.0%</span>
+                        </div>
+                        <div class="growth-card-comparison">Views of uploaded videos vs last month</div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Uploads this month -->
+                <div class="growth-card card">
+                    <div class="growth-card-body">
+                        <span class="growth-card-label">Uploads this Month</span>
+                        <div class="growth-metric-val">
+                            <span id="growth-uploads-count" class="growth-count-number">0</span>
+                            <span id="growth-uploads-pct" class="growth-badge badge-success">+0%</span>
+                        </div>
+                        <div class="growth-card-comparison">New video uploads vs last month</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REVENUE DETAILS SECTION (Estimates + Historical Bar Chart) -->
+            <section class="revenue-analysis-wrapper">
+                <div class="revenue-estimate-row">
+                    <!-- Left: Est Last 30 Days Revenue -->
+                    <div class="card revenue-details-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Estimated Last 30 Days Revenue</h3>
+                            <span class="card-subtitle">Recalculate earnings by selecting your channel's niche CPM.</span>
+                        </div>
+                        <div class="revenue-card-content">
+                            <div class="revenue-display" id="revenue-30d-display">₹0.00 - ₹0.00</div>
+                            <div class="dropdown-group">
+                                <label for="niche-select" class="dropdown-label">Select Channel Niche:</label>
+                                <select id="niche-select" class="custom-select" onchange="onNicheChange()">
+                                    <option value="tech" selected>Technology / Coding ($6 - $10 CPM)</option>
+                                    <option value="gaming">Gaming ($3 - $6 CPM)</option>
+                                    <option value="finance">Finance / Business ($10 - $20 CPM)</option>
+                                    <option value="lifestyle">Lifestyle / Vlogs ($2 - $5 CPM)</option>
+                                    <option value="education">Education / Tutorials ($4 - $8 CPM)</option>
+                                    <option value="india_general">India General ($0.8 - $2.0 CPM)</option>
+                                    <option value="entertainment">Entertainment / Comedy ($2 - $4 CPM)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Projected Next Month -->
+                    <div class="card revenue-details-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Projected Next Month</h3>
+                            <span class="card-subtitle">Projected next 30 days based on recent trends.</span>
+                        </div>
+                        <div class="revenue-card-content">
+                            <div class="revenue-display" id="revenue-projection-display">₹0.00 - ₹0.00</div>
+                            <div class="trend-badge-wrapper">
+                                <span class="trend-label">Projected Trend:</span>
+                                <span id="revenue-trend-indicator" class="badge-success">
+                                    <svg class="trend-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" width="16" height="16">
+                                        <line x1="12" y1="19" x2="12" y2="5"></line>
+                                        <polyline points="5 12 12 5 19 12"></polyline>
+                                    </svg>
+                                    <span>UPWARD</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6-Month Historical Revenue Estimate Bar Chart -->
+                <div class="card revenue-history-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Estimated Monthly Revenue — Last 6 Months</h3>
+                        <span class="card-subtitle">Calculated based on generated historical views and current CPM rates.</span>
+                    </div>
+                    <div class="chart-container historical-revenue-container">
+                        <canvas id="revenueBarChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TOP VIDEOS TABLE SECTION -->
+            <section class="card top-videos-card">
+                <div class="card-header">
+                    <h3 class="card-title">Top Uploads — Last 30 Days</h3>
+                    <span class="card-subtitle">Sorted by total views. Highlights high-engagement content.</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="videos-table" id="top-videos-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th style="width: 80px;">Thumbnail</th>
+                                <th>Video Title</th>
+                                <th class="text-right">Views</th>
+                                <th class="text-right">Likes</th>
+                                <th class="text-right">Comments</th>
+                                <th class="text-center">Engagement Rate</th>
+                                <th>Published Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-videos-tbody">
+                            <!-- Table rows will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- LOADING SPINNER OVERLAY -->
+    <div class="spinner-overlay" id="loading-spinner" style="display: none;">
+        <div class="spinner-content">
+            <div class="spinner"></div>
+            <p class="spinner-text">Analyzing channel data from YouTube...</p>
+        </div>
+    </div>
+
+    <!-- ERROR STATE MODAL / CARD OVERLAY -->
+    <div class="error-overlay" id="error-overlay" style="display: none;">
+        <div class="error-card">
+            <div class="error-icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h3 class="error-title" id="error-title">API Error</h3>
+            <p class="error-message" id="error-message">Something went wrong while processing your request.</p>
+            <button class="btn-primary" onclick="closeErrorOverlay()">Go Back</button>
+        </div>
+    </div>
+
+    <!-- EMPTY STATE TEMPLATE (for channels with no recent uploads) -->
+    <template id="empty-state-template">
+        <div class="empty-state-container">
+            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" width="48" height="48">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <h4 class="empty-state-title">No Recent Videos Found</h4>
+            <p class="empty-state-text">This channel hasn't published any public videos in the last 30 days. Some statistics, charts, and video logs may not be available.</p>
+        </div>
+    </template>
+
+    <!-- Custom Frontend JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
