@@ -1,4 +1,4 @@
-<img width="1919" height="955" alt="image" src="https://github.com/user-attachments/assets/d6d3c808-aac8-4d9c-a458-3c572b654be8" /># YouTube Channel Analytics Dashboard
+# YouTube Channel Analytics Dashboard
 
 > **Live Demo → [creator-pulse1.onrender.com](https://creator-pulse1.onrender.com/)**
 
