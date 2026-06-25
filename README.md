@@ -1,4 +1,4 @@
-# YouTube Channel Analytics Dashboard
+<img width="1919" height="955" alt="image" src="https://github.com/user-attachments/assets/d6d3c808-aac8-4d9c-a458-3c572b654be8" /># YouTube Channel Analytics Dashboard
 
 > **Live Demo → [creator-pulse1.onrender.com](https://creator-pulse1.onrender.com/)**
 
@@ -8,11 +8,12 @@ A Flask-powered analytics tool that pulls live data from the YouTube Data API v3
 
 ## Screenshots
 
-| Channel Analytics | Revenue Estimation |
-|:---:|:---:|
-| *<img width="1919" height="946" alt="image" src="https://github.com/user-attachments/assets/7709108e-d311-4646-8bf2-eb78ac67bb5e" />
-* | *<img width="1919" height="955" alt="image" src="https://github.com/user-attachments/assets/c8df957c-78cc-43d1-8b53-30f66b7b3537" />
-* |
+Channel Analytics
+ *<img width="1919" height="946" alt="image" src="https://github.com/user-attachments/assets/7709108e-d311-4646-8bf2-eb78ac67bb5e" />
+
+ Revenue Estimation
+ *<img width="1919" height="955" alt="image" src="https://github.com/user-attachments/assets/c8df957c-78cc-43d1-8b53-30f66b7b3537" />
+
 
 ---
 
